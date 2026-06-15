@@ -263,7 +263,9 @@ export default function KalenderPage() {
   const todayStr = toDateStr(new Date());
 
   useEffect(() => {
-    fetch('/api/konten').then(r => r.json()).then(setKontenList);
+    fetch('/api/konten').then(r => r.json()).then(data => {
+      if (Array.isArray(data)) setKontenList(data);
+    });
   }, []);
 
   useEffect(() => {
