@@ -1,0 +1,31 @@
+# BMAD workflow system (tooling, tidak perlu di-track)
+/_bmad
+/_bmad-output
+
+# PRD dokumen internal
+KalenderKonten-PRD-v1.0.md
+
+# Claude Code settings (personal/machine-specific)
+/.claude
+/.agents
+
+# App — dependensi & build output (besar, generated)
+/app/node_modules/
+/app/.next/
+/app/out/
+/app/build/
+
+# App — secrets / environment
+/app/.env*.local
+/app/.env.local
+
+# App — build cache
+/app/tsconfig.tsbuildinfo
+/app/next-env.d.ts
+
+# App — file test sementara
+/app/*.xlsx
+
+# OS
+.DS_Store
+Thumbs.db
