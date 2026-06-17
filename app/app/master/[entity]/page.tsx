@@ -127,6 +127,7 @@ function TabBar({ entity }: { entity: string }) {
 
 function GenericMaster({ entity, label }: { entity: string; label: string }) {
   const [items, setItems] = useState<Item[]>([]);
+  const [search, setSearch] = useState('');
   const [newNama, setNewNama] = useState('');
   const [editId, setEditId] = useState<number | null>(null);
   const [editNama, setEditNama] = useState('');
@@ -137,7 +138,7 @@ function GenericMaster({ entity, label }: { entity: string; label: string }) {
     if (res.ok) setItems(await res.json());
   }
 
-  useEffect(() => { load(); }, [entity]);
+  useEffect(() => { load(); setSearch(''); }, [entity]);
 
   async function handleAdd() {
     setError('');
@@ -171,6 +172,10 @@ function GenericMaster({ entity, label }: { entity: string; label: string }) {
     load();
   }
 
+  const filtered = items.filter(item =>
+    !search || item.nama.toLowerCase().includes(search.toLowerCase())
+  );
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
       <h1 className="text-xl font-bold text-slate-800 mb-4">Master {label}</h1>
@@ -187,6 +192,15 @@ function GenericMaster({ entity, label }: { entity: string; label: string }) {
         <button onClick={handleAdd} className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 font-medium">Tambah</button>
       </div>
 
+      <div className="mb-4">
+        <input
+          className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder={`Cari ${label.toLowerCase()}...`}
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+      </div>
+
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-slate-100 text-slate-500 text-left">
@@ -196,7 +210,7 @@ function GenericMaster({ entity, label }: { entity: string; label: string }) {
           </tr>
         </thead>
         <tbody>
-          {items.map((item, idx) => (
+          {filtered.map((item, idx) => (
             <tr key={item.id} className="border-b border-slate-50 hover:bg-slate-50">
               <td className="py-2 text-slate-400 text-xs">{idx + 1}</td>
               <td className="py-2">
@@ -231,7 +245,7 @@ function GenericMaster({ entity, label }: { entity: string; label: string }) {
               </td>
             </tr>
           ))}
-          {items.length === 0 && <tr><td colSpan={4} className="py-4 text-center text-slate-400 text-sm">Belum ada data.</td></tr>}
+          {filtered.length === 0 && <tr><td colSpan={4} className="py-4 text-center text-slate-400 text-sm">{search ? 'Tidak ada hasil.' : 'Belum ada data.'}</td></tr>}
         </tbody>
       </table>
     </div>
@@ -241,6 +255,9 @@ function GenericMaster({ entity, label }: { entity: string; label: string }) {
 function JenisKontenMaster() {
   const [items, setItems] = useState<JenisKontenItem[]>([]);
   const [allPics, setAllPics] = useState<PicItem[]>([]);
+  const [search, setSearch] = useState('');
+  const [filterPicId, setFilterPicId] = useState<number | null>(null);
+  const [filterOpen, setFilterOpen] = useState(false);
   const [newNama, setNewNama] = useState('');
   const [newPicIds, setNewPicIds] = useState<number[]>([]);
   const [editId, setEditId] = useState<number | null>(null);
@@ -315,7 +332,65 @@ function JenisKontenMaster() {
         </div>
       </div>
 
+      {/* Search + PIC filter */}
+      <div className="mb-4 space-y-2">
+        <input
+          className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          placeholder="Cari jenis konten..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+        />
+        <div className="border border-slate-200 rounded-lg overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setFilterOpen(o => !o)}
+            className="w-full flex items-center justify-between px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 transition-colors"
+          >
+            <span className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V19l-4 2v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+              </svg>
+              <span className="font-medium">Filter PIC</span>
+              {filterPicId && <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-blue-600 text-white text-xs font-bold">1</span>}
+            </span>
+            <svg className={`w-4 h-4 text-slate-400 transition-transform ${filterOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
+          {filterOpen && (
+            <div className="border-t border-slate-200 p-3 bg-slate-50">
+              <select
+                className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={filterPicId ?? ''}
+                onChange={e => setFilterPicId(e.target.value ? Number(e.target.value) : null)}
+              >
+                <option value="">Semua PIC</option>
+                {allPics.map(p => (
+                  <option key={p.id} value={p.id}>{formatPicLabel(p.nama)}</option>
+                ))}
+              </select>
+              {filterPicId && (
+                <button
+                  type="button"
+                  onClick={() => setFilterPicId(null)}
+                  className="mt-2 text-xs text-slate-500 hover:text-slate-700 underline"
+                >
+                  Reset filter
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+
       {/* List */}
+      {(() => {
+        const filtered = items.filter(item => {
+          if (search && !item.nama.toLowerCase().includes(search.toLowerCase())) return false;
+          if (filterPicId && !item.pics.some(p => p.id === filterPicId)) return false;
+          return true;
+        });
+        return (
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-slate-100 text-slate-500 text-left">
@@ -326,7 +401,7 @@ function JenisKontenMaster() {
           </tr>
         </thead>
         <tbody>
-          {items.map((item, idx) => (
+          {filtered.map((item, idx) => (
             <tr key={item.id} className={`border-b border-slate-50 ${editId === item.id ? 'bg-blue-50/30' : 'hover:bg-slate-50'}`}>
               {editId === item.id ? (
                 <>
@@ -382,9 +457,11 @@ function JenisKontenMaster() {
               )}
             </tr>
           ))}
-          {items.length === 0 && <tr><td colSpan={3} className="py-4 text-center text-slate-400 text-sm">Belum ada data.</td></tr>}
+          {filtered.length === 0 && <tr><td colSpan={4} className="py-4 text-center text-slate-400 text-sm">{search || filterPicId ? 'Tidak ada hasil.' : 'Belum ada data.'}</td></tr>}
         </tbody>
       </table>
+        );
+      })()}
     </div>
   );
 }
